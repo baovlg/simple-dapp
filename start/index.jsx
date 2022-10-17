@@ -2,9 +2,39 @@ const { useState, useEffect, useMemo } = React;
 
 const App = () => {
     const [isMetamaskInstalled, setIsMetamaskInstalled] = useState(false);
+    const [accountsResult, setAccountsResult] = useState();
+
+    // @ts-ignore
+    const { ethereum } = window;
+
+    const onClickConnect = async () => {
+        try {
+            // Will open the MetaMask UI
+            // You should disable this button while the request is pending!
+            await ethereum.request({ method: 'eth_requestAccounts' });
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    const onClickGetAccounts = async () => {
+        try {
+            const accounts = await ethereum.request({ method: 'eth_accounts' });
+            setAccountsResult(accounts[0] || 'Not able to get accounts')
+        } catch (error) {
+            console.error(error);
+        }
+
+    }
+
+    const txtAction = useMemo(() => {
+        if (isMetamaskInstalled) {
+            return 'Connect';
+        }
+        return 'Click here to install MetaMask!';
+    }, [isMetamaskInstalled]);
+
     const isMetamaskConnected = () => {
-        // @ts-ignore
-        const { ethereum } = window;
         return Boolean(ethereum && ethereum.isMetaMask);
     }
 
@@ -14,18 +44,11 @@ const App = () => {
         }
     }, []);
 
-    const txtAction = useMemo(() => {
-        if (isMetamaskInstalled) {
-            return 'Connect';
-        }
-        return 'Click here to install MetaMask!';
-    }, [isMetamaskInstalled]);
-
     return (
         <main className="container-fluid">
             <header>
                 <h1 className="text-center">E2E Test Dapp</h1>
-                <img id="mm-logo" src="metamask-fox.svg"></img>
+                {/* <img id="mm-logo" src="metamask-fox.svg"></img> */}
             </header>
             {/* Part 1 Setting up Basic Actions and Status*/}
             <section>
@@ -48,9 +71,15 @@ const App = () => {
                         <div className="card">
                             <div className="card-body">
                                 <h4 className="card-title">Basic Actions</h4>
-                                <button className="btn btn-primary btn-lg btn-block mb-3" disabled >{txtAction}</button>
-                                <button className="btn btn-primary btn-lg btn-block mb-3" id="getAccounts">eth_accounts</button>
-                                <p className="info-text alert alert-secondary">eth_accounts result: <span id="getAccountsResult" /></p>
+                                <button
+                                    className="btn btn-primary btn-lg btn-block mb-3"
+                                    disabled={!isMetamaskInstalled}
+                                    onClick={onClickConnect}
+                                >
+                                    {txtAction}
+                                </button>
+                                <button className="btn btn-primary btn-lg btn-block mb-3" onClick={onClickGetAccounts}>eth_accounts</button>
+                                <p className="info-text alert alert-secondary">eth_accounts result: <span>{accountsResult}</span></p>
                             </div>
                         </div>
                     </div>
